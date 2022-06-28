@@ -22,6 +22,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final GoogleSignIn googleSignIn = GoogleSignIn();
   User? _currentUser;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -61,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final User? user = await _getUser();
 
     if (user == null) {
-      _scaffoldMessengerKey.currentState?.showSnackBar(const SnackBar(
+      _scaffoldMessengerKey.currentState!.showSnackBar(const SnackBar(
         content: Text("Não foi possível fazer login. Tente novamente!"),
         backgroundColor: Colors.red,
       ));
@@ -71,19 +72,28 @@ class _ChatScreenState extends State<ChatScreen> {
       'uid': user?.uid,
       'senderName': user?.displayName,
       'senderPhotoUrl': user?.photoURL,
+      'time': Timestamp.now(),
     };
 
     if (imgFile != null) {
       firebase_storage.UploadTask task = firebase_storage
           .FirebaseStorage.instance
           .ref()
-          .child(DateTime.now().millisecondsSinceEpoch.toString())
+          .child(user!.uid + DateTime.now().millisecondsSinceEpoch.toString())
           .putFile(File(imgFile.path));
+
+      setState(() {
+        _isLoading = true;
+      });
 
       firebase_storage.TaskSnapshot taskSnapshot =
           await task.whenComplete(() => imgFile);
       String url = await taskSnapshot.ref.getDownloadURL();
       data['imgUrl'] = url;
+
+      setState(() {
+        _isLoading = false;
+      });
     }
 
     if (text != null) {
@@ -110,7 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   onPressed: () {
                     FirebaseAuth.instance.signOut();
                     googleSignIn.signOut();
-                    _scaffoldMessengerKey.currentState?.showSnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("Você saiu com sucesso!"),
                       ),
@@ -123,8 +133,10 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance.collection('messages').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('messages')
+                  .orderBy('time')
+                  .snapshots(),
               builder: (context, snapshot) {
                 switch (snapshot.connectionState) {
                   case ConnectionState.none:
@@ -145,15 +157,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       itemBuilder: (context, index) {
                         return ChatMessage(
                             documents[index].data() as Map<String, dynamic>,
-                            true
-                            // documents[index]["uid"] == _currentUser?.uid
-                            );
+                            documents[index]["uid"] == _currentUser?.uid);
                       },
                     );
                 }
               },
             ),
           ),
+          _isLoading == true ? const LinearProgressIndicator() : Container(),
           TextComposer(sendMessage: _sendMessage),
         ],
       ),

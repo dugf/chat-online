@@ -16,7 +16,8 @@ class ChatMessage extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.only(right: 16),
                   child: CircleAvatar(
-                    backgroundImage: NetworkImage(data['senderPhotoUrl']),
+                    backgroundImage: NetworkImage(data['senderPhotoUrl'] ??
+                        'https://picsum.photos/200/300'),
                   ),
                 )
               : Container(),
@@ -36,7 +37,7 @@ class ChatMessage extends StatelessWidget {
                         style: const TextStyle(fontSize: 16),
                       ),
                 Text(
-                  data['senderName'],
+                  data['senderName'] ?? '',
                   style: const TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w500),
                 ),
@@ -47,7 +48,8 @@ class ChatMessage extends StatelessWidget {
               ? Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: CircleAvatar(
-                    backgroundImage: NetworkImage(data['senderPhotoUrl']),
+                    backgroundImage: NetworkImage(data['senderPhotoUrl'] ??
+                        'https://picsum.photos/200/300'),
                   ),
                 )
               : Container(),
