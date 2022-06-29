@@ -105,68 +105,70 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return ScaffoldMessenger(
       key: _scaffoldMessengerKey,
-      appBar: AppBar(
-        title: Text(_currentUser != null
-            ? 'Olá, ${_currentUser?.displayName}'
-            : 'Chat App'),
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          _currentUser != null
-              ? IconButton(
-                  icon: const Icon(Icons.exit_to_app),
-                  onPressed: () {
-                    FirebaseAuth.instance.signOut();
-                    googleSignIn.signOut();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Você saiu com sucesso!"),
-                      ),
-                    );
-                  })
-              : Container()
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('messages')
-                  .orderBy('time')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                switch (snapshot.connectionState) {
-                  case ConnectionState.none:
-                  case ConnectionState.waiting:
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  default:
-                    List<DocumentSnapshot<Map<String, dynamic>>> documents =
-                        snapshot.data!.docs
-                            .cast<DocumentSnapshot<Map<String, dynamic>>>()
-                            .reversed
-                            .toList();
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_currentUser != null
+              ? 'Olá, ${_currentUser?.displayName}'
+              : 'Chat App'),
+          centerTitle: true,
+          elevation: 0,
+          actions: [
+            _currentUser != null
+                ? IconButton(
+                    icon: const Icon(Icons.exit_to_app),
+                    onPressed: () {
+                      FirebaseAuth.instance.signOut();
+                      googleSignIn.signOut();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Você saiu com sucesso!"),
+                        ),
+                      );
+                    })
+                : Container()
+          ],
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('messages')
+                    .orderBy('time')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    default:
+                      List<DocumentSnapshot<Map<String, dynamic>>> documents =
+                          snapshot.data!.docs
+                              .cast<DocumentSnapshot<Map<String, dynamic>>>()
+                              .reversed
+                              .toList();
 
-                    return ListView.builder(
-                      itemCount: documents.length,
-                      reverse: true,
-                      itemBuilder: (context, index) {
-                        return ChatMessage(
-                            documents[index].data() as Map<String, dynamic>,
-                            documents[index]["uid"] == _currentUser?.uid);
-                      },
-                    );
-                }
-              },
+                      return ListView.builder(
+                        itemCount: documents.length,
+                        reverse: true,
+                        itemBuilder: (context, index) {
+                          return ChatMessage(
+                              documents[index].data() as Map<String, dynamic>,
+                              documents[index]["uid"] == _currentUser?.uid);
+                        },
+                      );
+                  }
+                },
+              ),
             ),
-          ),
-          _isLoading == true ? const LinearProgressIndicator() : Container(),
-          TextComposer(sendMessage: _sendMessage),
-        ],
+            _isLoading == true ? const LinearProgressIndicator() : Container(),
+            TextComposer(sendMessage: _sendMessage),
+          ],
+        ),
       ),
     );
   }
